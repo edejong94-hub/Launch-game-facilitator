@@ -216,7 +216,8 @@ export function Analytics() {
           : team.teamName;
 
         if (round === 0) {
-          roundData[teamLabel] = team.cash || 5000;
+          // All teams start with €5,000
+          roundData[teamLabel] = 5000;
         } else {
           const roundInfo = team.rounds?.find(r => r.round === round || r.id === String(round));
           if (roundInfo) {
