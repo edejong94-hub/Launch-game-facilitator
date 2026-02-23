@@ -1433,6 +1433,34 @@ button {
   letter-spacing: 0.05em;
 }
 
+/* Contract Indicator */
+.contract-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.contract-indicator svg {
+  flex-shrink: 0;
+}
+
+.contract-indicator.complete {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.contract-indicator.incomplete {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
 /* Warning Tags - Compact */
 .warning-tags {
   display: flex;

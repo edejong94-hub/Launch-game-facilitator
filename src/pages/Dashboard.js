@@ -9,12 +9,14 @@ import {
   RefreshCw,
   BarChart3,
   Trophy,
+  FileText,
 } from "lucide-react";
 import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useTeams } from "../hooks/useTeams";
 import { TeamCard } from "../component/TeamCard";
 import FacilitatorScoring from "../component/FacilitatorScoring";
+import ContractOverview from "../component/ContractOverview";
 import EditTeamModal from "../Components/EditTeamModal";
 
 export function Dashboard({ gameId, gameName }) {
@@ -218,6 +220,13 @@ export function Dashboard({ gameId, gameName }) {
               Teams
             </button>
             <button
+              className={`toggle-btn ${view === "contracts" ? "active" : ""}`}
+              onClick={() => setView("contracts")}
+            >
+              <FileText size={18} />
+              Contracts
+            </button>
+            <button
               className={`toggle-btn ${view === "scoring" ? "active" : ""}`}
               onClick={() => setView("scoring")}
             >
@@ -418,6 +427,14 @@ export function Dashboard({ gameId, gameName }) {
             </div>
           )}
         </>
+      )}
+
+      {/* Contracts view */}
+      {view === "contracts" && (
+        <ContractOverview
+          gameId={gameId}
+          teams={filteredTeams}
+        />
       )}
 
       {/* Scoring view */}

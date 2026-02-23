@@ -11,8 +11,10 @@ import {
   XCircle,
   ChevronRight,
   Edit,
-  FileCheck
+  FileCheck,
+  FileText
 } from 'lucide-react';
+import { getRequiredContracts } from './ContractOverview';
 
 export function TeamCard({ team, gameId, onEdit }) {
   const {
@@ -138,6 +140,21 @@ export function TeamCard({ team, gameId, onEdit }) {
           </>
         )}
       </div>
+
+      {/* Contract Status Indicator */}
+      {(() => {
+        const contracts = getRequiredContracts(team, team.verifiedContracts || {});
+        if (contracts.length === 0) return null;
+        const verified = contracts.filter(c => c.verified).length;
+        const isComplete = verified >= contracts.length;
+        return (
+          <div className={`contract-indicator ${isComplete ? 'complete' : 'incomplete'}`}>
+            <FileText size={14} />
+            <span>{verified}/{contracts.length} contracts</span>
+            {isComplete ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
+          </div>
+        );
+      })()}
 
       {/* Compact Warnings as Tags */}
       {warnings.length > 0 && (
