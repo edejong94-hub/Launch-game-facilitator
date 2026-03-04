@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { calculateResearchScore as calculateTeamScore } from '../config/scoring-config';
+import { rankTeams } from '../config/scoring-config';
 import './LiveDashboard.css';
 
 // Get gameId from URL
@@ -87,51 +87,35 @@ const LiveDashboard = () => {
     return () => unsubscribe();
   }, [gameId]);
 
-  // Calculate score using the shared scoring config
-  const calculateScore = (team) => {
-    const latestRound = team.latestRound || {};
-    const roundProgress = latestRound.progress || {};
-    const activities = latestRound.completedActivities || [];
-
-    const teamData = {
-      cash:               roundProgress.cash ?? team.cash ?? 0,
-      trl:                roundProgress.currentTRL ?? roundProgress.trl ?? team.trl ?? 0,
-      completedActivities: activities,
-      interviewCount:     roundProgress.interviewsTotal ?? roundProgress.interviews ?? team.interviewCount ?? 0,
-      validationCount:    roundProgress.validationsTotal ?? roundProgress.validations ?? team.validationCount ?? 0,
-      investorEquity:     roundProgress.investorEquity ?? latestRound.funding?.investorEquity ?? 0,
-      licenceAgreement:   team.licenceAgreement,
-      legalForm:          latestRound.legalForm,
-      teamProfiles:       team.teamProfiles || [],
-      hiredProfiles:      team.hiredProfiles || [],
-      employmentStatus:   team.employmentStatus || 'university',
-      leftUniversityRound: team.leftUniversityRound ?? null,
-      wentNegative:       team.wentNegative ?? false,
-      totalInvestment:    team.totalInvestment ?? 0,
-      totalRevenue:       latestRound.funding?.revenue ?? team.totalRevenue ?? 0,
-      employees:          latestRound.employees ?? team.employees ?? 0,
-      totalStickersUsed:  team.totalStickersUsed ?? 0,
-      pivotCount:         team.pivotCount ?? 0,
-      maxSpendInRound:    roundProgress.maxSpendInRound ?? 0,
-      loanInterest:       latestRound.funding?.loanInterest ?? 0,
-      funding:            latestRound.funding || {},
-    };
-
-    const progress = {
-      cash:            teamData.cash,
-      currentTRL:      teamData.trl,
-      investorEquity:  teamData.investorEquity,
-      interviewsTotal: teamData.interviewCount,
-      validationsTotal: teamData.validationCount,
-    };
-
-    return calculateTeamScore(teamData, progress).totalScore;
-  };
-
-  // Sort and rank teams
-  const rankedTeams = [...teams]
-    .map(team => ({ ...team, score: calculateScore(team) }))
-    .sort((a, b) => b.score - a.score);
+  // Pre-map latestRound fields to flat properties, identical to FacilitatorScoring.js,
+  // then rank via the shared rankTeams function — single scoring code path.
+  const rankedTeams = rankTeams(
+    teams.map(team => {
+      const latestRound = team.latestRound || {};
+      const roundProgress = latestRound.progress || {};
+      return {
+        ...team,
+        cash:             roundProgress.cash ?? latestRound.cash ?? team.cash ?? 0,
+        trl:              roundProgress.currentTRL ?? latestRound.trl ?? team.trl ?? 0,
+        customersAcquired: roundProgress.validationsTotal ?? latestRound.validationCount ?? team.validationCount ?? 0,
+        interviews:       roundProgress.interviewsTotal ?? latestRound.interviewCount ?? team.interviewCount ?? 0,
+        equityRetained:   100 - (roundProgress.investorEquity ?? latestRound.funding?.investorEquity ?? 0),
+        completedActivities: latestRound.completedActivities || [],
+        legalForm:        latestRound.legalForm,
+        revenue:          latestRound.funding?.revenue ?? roundProgress.revenue ?? 0,
+        totalRevenue:     team.totalRevenue ?? latestRound.funding?.revenue ?? 0,
+        employees:        latestRound.employees ?? team.employees ?? 0,
+        maxSpendInRound:  roundProgress.maxSpendInRound ?? 0,
+        loanInterest:     latestRound.funding?.loanInterest ?? 0,
+        funding:          latestRound.funding || {},
+        wentNegative:     team.wentNegative ?? roundProgress.wentNegative ?? false,
+        leftUniversityRound: team.leftUniversityRound ?? null,
+        totalInvestment:  team.totalInvestment ?? 0,
+        totalStickersUsed: team.totalStickersUsed ?? 0,
+        pivotCount:       team.pivotCount ?? 0,
+      };
+    })
+  );
 
   // Get display values
   const getTeamData = (team) => {
@@ -283,7 +267,7 @@ const LiveDashboard = () => {
 
                   {/* Score */}
                   <div className="team-score">
-                    <span className="score-value">{team.score}</span>
+                    <span className="score-value">{team.scoreData?.totalScore}</span>
                     <span className="score-label">pts</span>
                   </div>
 
@@ -291,7 +275,7 @@ const LiveDashboard = () => {
                   {isTop3 && (
                     <div
                       className="rank-bar"
-                      style={{ width: `${(team.score / Math.max(...rankedTeams.map(t => t.score), 1)) * 100}%` }}
+                      style={{ width: `${(team.scoreData?.totalScore / Math.max(...rankedTeams.map(t => t.scoreData?.totalScore || 0), 1)) * 100}%` }}
                     />
                   )}
                 </div>
