@@ -1,335 +1,132 @@
-// Scoring configuration for both startup and research modes
+// Unified scoring configuration
+// Base score: max 90 pts (8 metrics, formula: min(1, value/target) × weight)
+// Achievements: bonuses/penalties on top (positive achievements capped at +10)
 
-export const scoringConfig = {
-  startup: {
-    name: "Startup Mode",
-    metrics: [
-      {
-        id: 'cash',
-        name: 'Cash Position',
-        weight: 0.25,
-        calculate: (team) => {
-          const cash = team.cash || 0;
-          // Score based on cash position (normalized to 0-100)
-          // Assume $100k is excellent, $0 is poor
-          return Math.min(100, (cash / 100000) * 100);
-        },
-        format: (value) => `$${value.toLocaleString()}`,
-        description: 'Current cash in bank'
-      },
-      {
-        id: 'development',
-        name: 'Product Development',
-        weight: 0.20,
-        calculate: (team) => {
-          const devHours = team.developmentHours || 0;
-          // Assume 500 hours is fully developed product
-          return Math.min(100, (devHours / 500) * 100);
-        },
-        format: (value) => `${value} hours`,
-        description: 'Development hours invested'
-      },
-      {
-        id: 'customers',
-        name: 'Customer Validation',
-        weight: 0.20,
-        calculate: (team) => {
-          const customers = team.customersAcquired || 0;
-          // Score based on customer acquisition
-          // Assume 50 customers is excellent
-          return Math.min(100, (customers / 50) * 100);
-        },
-        format: (value) => `${value} customers`,
-        description: 'Number of customers acquired'
-      },
-      {
-        id: 'progress',
-        name: 'Overall Progress',
-        weight: 0.15,
-        calculate: (team) => {
-          const completedActivities = team.completedActivities?.length || 0;
-          // Score based on activities completed
-          // Assume 30 activities is very thorough
-          return Math.min(100, (completedActivities / 30) * 100);
-        },
-        format: (value) => `${value} activities`,
-        description: 'Activities completed'
-      },
-      {
-        id: 'equity',
-        name: 'Equity Retained',
-        weight: 0.10,
-        calculate: (team) => {
-          const equity = team.equityRetained || 100;
-          // Higher equity is better (starting at 100%)
-          return equity;
-        },
-        format: (value) => `${value}%`,
-        description: 'Ownership percentage retained'
-      },
-      {
-        id: 'legal',
-        name: 'Legal Compliance',
-        weight: 0.10,
-        calculate: (team) => {
-          const legalForms = team.legalForms || [];
-          const requiredForms = ['incorporation', 'founders-agreement'];
-          const completed = requiredForms.filter(f => legalForms.includes(f)).length;
-          return (completed / requiredForms.length) * 100;
-        },
-        format: (value) => `${value}%`,
-        description: 'Essential legal documents filed'
-      }
-    ],
-    bonusPoints: [
-      {
-        id: 'profitability',
-        name: 'Profitability Bonus',
-        points: 50,
-        check: (team) => (team.cash || 0) > 50000 && (team.currentRound || 1) <= 3,
-        description: 'Profitable before round 4'
-      },
-      {
-        id: 'early-customers',
-        name: 'Early Traction Bonus',
-        points: 30,
-        check: (team) => (team.customersAcquired || 0) >= 10 && (team.currentRound || 1) <= 2,
-        description: '10+ customers by round 2'
-      },
-      {
-        id: 'lean',
-        name: 'Lean Operation Bonus',
-        points: 40,
-        check: (team) => (team.equityRetained || 100) >= 80 && (team.cash || 0) > 30000,
-        description: 'High equity with strong cash position'
-      }
-    ]
-  },
-  
-  research: {
-    name: "Research Mode",
-    metrics: [
-      {
-        id: 'cash',
-        name: 'Cash Position',
-        weight: 0.20,
-        calculate: (team) => {
-          const cash = team.cash || 0;
-          return Math.min(100, (cash / 150000) * 100);
-        },
-        format: (value) => `$${value.toLocaleString()}`,
-        description: 'Current cash in bank'
-      },
-      {
-        id: 'trl',
-        name: 'Technology Readiness',
-        weight: 0.25,
-        calculate: (team) => {
-          const trl = team.trl || 1;
-          // TRL scale is 1-9, convert to percentage
-          return ((trl - 1) / 8) * 100;
-        },
-        format: (value) => `TRL ${value}`,
-        description: 'Technology Readiness Level'
-      },
-      {
-        id: 'ip',
-        name: 'IP Portfolio',
-        weight: 0.15,
-        calculate: (team) => {
-          const patents = team.patents || 0;
-          const provisionals = team.provisionalPatents || 0;
-          // Score based on IP protection
-          return Math.min(100, (patents * 50 + provisionals * 25));
-        },
-        format: (value) => `${value} patents`,
-        description: 'Intellectual property protection'
-      },
-      {
-        id: 'licence',
-        name: 'Licence Terms',
-        weight: 0.15,
-        calculate: (team) => {
-          const licence = team.universityLicence;
-          if (!licence) return 0;
-          
-          // Score based on deal favorability
-          const scores = {
-            'balanced': 70,
-            'revenue-heavy': 60,
-            'high-percentage': 50,
-            'early-payments': 55,
-            'equity': 80
-          };
-          return scores[licence] || 0;
-        },
-        format: (value) => value,
-        description: 'University licence agreement quality'
-      },
-      {
-        id: 'customers',
-        name: 'Market Validation',
-        weight: 0.15,
-        calculate: (team) => {
-          const customers = team.customersAcquired || 0;
-          const pilots = team.pilotPrograms || 0;
-          // Research mode typically has fewer but higher-value customers
-          return Math.min(100, (customers * 20 + pilots * 40));
-        },
-        format: (value) => `${value} customers`,
-        description: 'Customer and pilot validation'
-      },
-      {
-        id: 'team',
-        name: 'Team Composition',
-        weight: 0.10,
-        calculate: (team) => {
-          const profiles = team.founderProfiles || [];
-          if (profiles.length === 0) return 0;
-          
-          // Check for diversity in profiles
-          const uniqueProfiles = new Set(profiles).size;
-          const diversityScore = (uniqueProfiles / profiles.length) * 100;
-          
-          // Bonus for having all three key roles
-          const hasScientist = profiles.includes('scientist');
-          const hasBusiness = profiles.includes('business') || profiles.includes('entrepreneur');
-          const hasTech = profiles.includes('engineer') || profiles.includes('scientist');
-          const completenessBonus = (hasScientist && hasBusiness && hasTech) ? 20 : 0;
-          
-          return Math.min(100, diversityScore + completenessBonus);
-        },
-        format: (value) => `${value}%`,
-        description: 'Team diversity and completeness'
-      }
-    ],
-    bonusPoints: [
-      {
-        id: 'grant-winner',
-        name: 'Grant Funding Secured',
-        points: 60,
-        check: (team) => (team.grantsReceived || 0) > 0,
-        description: 'Successfully secured grant funding'
-      },
-      {
-        id: 'high-trl',
-        name: 'Rapid Development',
-        points: 50,
-        check: (team) => (team.trl || 1) >= 7 && (team.currentRound || 1) <= 4,
-        description: 'Reached TRL 7+ by round 4'
-      },
-      {
-        id: 'ip-protected',
-        name: 'Strong IP Protection',
-        points: 40,
-        check: (team) => (team.patents || 0) >= 1,
-        description: 'Filed full patent application'
-      },
-      {
-        id: 'incubator',
-        name: 'Incubator Acceptance',
-        points: 35,
-        check: (team) => team.inIncubator === true,
-        description: 'Accepted into incubator program'
-      },
-      {
-        id: 'balanced-team',
-        name: 'Balanced Founding Team',
-        points: 30,
-        check: (team) => {
-          const profiles = team.founderProfiles || [];
-          return new Set(profiles).size === 3;
-        },
-        description: 'Three founders with diverse profiles'
-      }
-    ]
-  }
+export const METRICS = [
+  // 💰 Financial Health (max 25)
+  { id: 'cash',        name: 'Cash Position',         category: 'financial',   weight: 15, target: 50000, getValue: (t) => t.cash ?? 0,              format: (v) => `€${Number(v).toLocaleString()}` },
+  { id: 'revenue',     name: 'Revenue Generated',     category: 'financial',   weight: 10, target: 20000, getValue: (t) => t.revenue ?? 0,           format: (v) => `€${Number(v).toLocaleString()}` },
+  // 🔬 Technology Progress (max 25)
+  { id: 'trl',         name: 'TRL Level',             category: 'technology',  weight: 20, target: 7,     getValue: (t) => t.trl ?? 0,               format: (v) => `TRL ${v}` },
+  { id: 'ip',          name: 'IP Protection',         category: 'technology',  weight: 5,  target: 1,     getValue: (t) => t.patents ?? 0,            format: (v) => `${v} patent${v !== 1 ? 's' : ''}` },
+  // 🎯 Market Validation (max 25)
+  { id: 'validations', name: 'Customer Validations',  category: 'market',      weight: 15, target: 2,     getValue: (t) => t.customersAcquired ?? 0,  format: (v) => `${v} validation${v !== 1 ? 's' : ''}` },
+  { id: 'interviews',  name: 'Customer Interviews',   category: 'market',      weight: 10, target: 6,     getValue: (t) => t.interviews ?? 0,         format: (v) => `${v} interview${v !== 1 ? 's' : ''}` },
+  // 👥 Team & Structure (max 15)
+  { id: 'equity',      name: 'Founder Equity',        category: 'team',        weight: 10, target: 60,    getValue: (t) => t.equityRetained ?? 100,   format: (v) => `${Math.round(v)}%` },
+  { id: 'legal',       name: 'Legal Structure',       category: 'team',        weight: 5,  target: 1,     getValue: (t) => (t.legalForm || t.legalForms?.length > 0) ? 1 : 0, format: (v) => v ? 'BV established' : 'Not incorporated' },
+];
+
+export const CATEGORIES = [
+  { id: 'financial',  name: '💰 Financial Health',     maxScore: 25 },
+  { id: 'technology', name: '🔬 Technology Progress',   maxScore: 25 },
+  { id: 'market',     name: '🎯 Market Validation',     maxScore: 25 },
+  { id: 'team',       name: '👥 Team & Structure',      maxScore: 15 },
+];
+
+const _hasProfile = (team, ...keywords) => {
+  const profiles = (team.founderProfiles || team.teamProfiles || []).map(p => (p || '').toLowerCase());
+  return profiles.some(p => keywords.some(k => p.includes(k)));
 };
 
-// Helper function to calculate total score for a team
-export function calculateTeamScore(team, mode = 'startup') {
-  const config = scoringConfig[mode];
-  if (!config) return null;
-  
-  let totalScore = 0;
+export const ACHIEVEMENTS = {
+  positive: [
+    { id: 'grant-winner',       name: 'Grant Winner',        points: 3, description: 'Secured grant funding',                               check: (t) => (t.grantsReceived || 0) > 0 },
+    { id: 'incubator-star',     name: 'Incubator Star',      points: 2, description: 'Accepted into an incubator programme',               check: (t) => t.inIncubator === true },
+    { id: 'dream-team',         name: 'Dream Team',          points: 2, description: 'Team covers business, science, and engineering roles', check: (t) => _hasProfile(t, 'business', 'entrepreneur', 'commercial') && _hasProfile(t, 'scientist', 'researcher', 'phd') && _hasProfile(t, 'engineer', 'tech', 'developer', 'cto') },
+    { id: 'smart-negotiator',   name: 'Smart Negotiator',    points: 2, description: 'Retained ≥70% founder equity',                       check: (t) => (t.equityRetained ?? 100) >= 70 },
+    { id: 'customer-champion',  name: 'Customer Champion',   points: 2, description: '2 or more customer validations (LOIs/pilots)',        check: (t) => (t.customersAcquired || 0) >= 2 },
+    { id: 'ip-fortress',        name: 'IP Fortress',         points: 2, description: 'Filed at least one patent',                          check: (t) => (t.patents || 0) >= 1 },
+    { id: 'speed-runner',       name: 'Speed Runner',        points: 2, description: 'Reached TRL 7 by round 3',                           check: (t) => (t.trl || 0) >= 7 && (t.currentRound || 1) <= 3 },
+    { id: 'financially-prudent',name: 'Financially Prudent', points: 1, description: 'Strong cash position while retaining majority equity', check: (t) => (t.cash || 0) > 50000 && (t.equityRetained ?? 100) >= 70 },
+    { id: 'secret-keeper',      name: 'Secret Keeper',       points: 1, description: 'Signed NDA with industry partner',                   check: (t) => t.completedActivities?.includes('industryExploration') || false },
+  ],
+  negative: [
+    { id: 'bankrupt-baby',        name: 'Bankrupt Baby',          points: -3, description: 'Negative cash position',                                  check: (t) => (t.cash || 0) < 0 },
+    { id: 'what-customers',       name: 'What Customers?',        points: -3, description: 'No customer validations or interviews by round 3',         check: (t) => (t.customersAcquired || 0) === 0 && (t.interviews || 0) === 0 && (t.currentRound || 1) >= 3 },
+    { id: 'professor-forever',    name: 'Professor Forever',      points: -2, description: 'Still employed at university by round 3',                  check: (t) => t.employmentStatus === 'university' && (t.currentRound || 1) >= 3 },
+    { id: 'equity-santa',         name: 'Equity Santa',           points: -2, description: 'Gave away more than 70% of equity',                        check: (t) => (t.equityRetained ?? 100) < 30 },
+    { id: 'patent-what-patent',   name: 'Patent? What Patent?',   points: -2, description: 'No IP protection by end of game',                          check: (t) => (t.patents || 0) === 0 && (t.provisionalPatents || 0) === 0 && (t.currentRound || 1) >= 4 },
+    { id: 'tto-ghosted',          name: 'TTO Ghosted',            points: -2, description: 'Never engaged with the TTO',                               check: (t) => (t.currentRound || 1) >= 2 && !t.completedActivities?.includes('ttoDiscussion') },
+    { id: 'terrible-negotiator',  name: 'Terrible Negotiator',    points: -2, description: 'Agreed to unfavourable licence terms',                     check: (t) => ['revenue-heavy', 'high-percentage', 'early-payments'].includes(t.universityLicence) },
+    { id: 'lab-rat',              name: 'Lab Rat',                points: -2, description: 'TRL below 4 at end of game',                               check: (t) => (t.trl || 0) < 4 && (t.currentRound || 1) >= 4 },
+    { id: 'interview-allergic',   name: 'Interview Allergic',     points: -2, description: 'No customer interviews conducted by round 3',              check: (t) => (t.interviews || 0) === 0 && (t.currentRound || 1) >= 3 },
+    { id: 'all-nerds-no-sales',   name: 'All Nerds No Sales',     points: -1, description: 'No business profile on the founding team',                 check: (t) => { const p = (t.founderProfiles || t.teamProfiles || []).filter(Boolean); return p.length > 0 && !_hasProfile(t, 'business', 'entrepreneur', 'commercial', 'sales'); } },
+    { id: 'meeting-avoider',      name: 'Meeting Avoider',        points: -1, description: 'No investor, customer, or bank meetings held',             check: (t) => (t.currentRound || 1) >= 2 && !['investorMeeting', 'customerInterviews', 'bankMeeting'].some(a => t.completedActivities?.includes(a)) },
+    { id: 'loan-shark-victim',    name: 'Loan Shark Victim',      points: -1, description: 'Took out a loan but still has low cash',                   check: (t) => t.completedActivities?.includes('loanApplication') && (t.cash || 0) < 10000 },
+    { id: 'pivot-addict',         name: 'Pivot Addict',           points: -1, description: 'Changed the startup idea (pivoted)',                        check: (t) => t.hasPivoted === true },
+    { id: 'one-person-show',      name: 'One Person Show',        points: -1, description: 'Team of only one founder',                                 check: (t) => (t.founderProfiles || t.teamProfiles || []).filter(Boolean).length <= 1 },
+    { id: 'grant-baby',           name: 'Grant Baby',             points: -1, description: 'Relies solely on grants with no other revenue',            check: (t) => (t.grantsReceived || 0) > 0 && (t.revenue || 0) === 0 && (t.currentRound || 1) >= 3 },
+  ],
+};
+
+export function calculateTeamScore(team) {
+  let baseScore = 0;
   const metricScores = {};
-  
-  // Calculate weighted metric scores
-  config.metrics.forEach(metric => {
-    const rawValue = metric.calculate(team);
-    const weightedScore = rawValue * metric.weight;
-    totalScore += weightedScore;
-    
+
+  METRICS.forEach(metric => {
+    const value = metric.getValue(team);
+    const ratio = Math.min(1, value / metric.target);
+    const points = ratio * metric.weight;
+    baseScore += points;
     metricScores[metric.id] = {
       name: metric.name,
-      rawValue: rawValue,
-      weightedScore: weightedScore,
+      category: metric.category,
+      rawValue: ratio * 100, // percentage of target achieved (0–100, used for progress bar)
+      weightedScore: points,
       weight: metric.weight,
-      actualValue: metric.format(
-        team[metric.id] || 
-        (metric.id === 'development' ? team.developmentHours : 
-         metric.id === 'trl' ? team.trl :
-         metric.id === 'customers' ? team.customersAcquired :
-         metric.id === 'equity' ? team.equityRetained :
-         metric.id === 'legal' ? Math.round((team.legalForms?.length || 0) / 2 * 100) :
-         metric.id === 'ip' ? team.patents :
-         metric.id === 'licence' ? team.universityLicence :
-         metric.id === 'team' ? (team.founderProfiles?.length || 0) * 33 :
-         team[metric.id] || 0)
-      )
+      actualValue: metric.format(value),
     };
   });
-  
-  // Calculate bonus points
-  let bonusTotal = 0;
-  const earnedBonuses = [];
-  
-  config.bonusPoints.forEach(bonus => {
-    if (bonus.check(team)) {
-      bonusTotal += bonus.points;
-      earnedBonuses.push({
-        name: bonus.name,
-        points: bonus.points,
-        description: bonus.description
-      });
+
+  let positiveTotal = 0;
+  let negativeTotal = 0;
+  const earnedAchievements = [];
+
+  ACHIEVEMENTS.positive.forEach(a => {
+    if (a.check(team)) {
+      positiveTotal += a.points;
+      earnedAchievements.push({ ...a });
     }
   });
-  
+
+  ACHIEVEMENTS.negative.forEach(a => {
+    if (a.check(team)) {
+      negativeTotal += a.points; // already negative
+      earnedAchievements.push({ ...a });
+    }
+  });
+
+  const cappedPositive = Math.min(10, positiveTotal);
+  const achievementTotal = cappedPositive + negativeTotal;
+
   return {
-    totalScore: Math.round(totalScore + bonusTotal),
-    baseScore: Math.round(totalScore),
-    bonusPoints: bonusTotal,
+    totalScore: Math.max(0, Math.round(baseScore + achievementTotal)),
+    baseScore: Math.round(baseScore),
+    achievementTotal,
+    positiveAchievements: cappedPositive,
+    negativeAchievements: negativeTotal,
     metricScores,
-    earnedBonuses,
-    mode: config.name
+    earnedAchievements,
   };
 }
 
-// Helper to compare teams and generate rankings
-export function rankTeams(teams, mode = 'startup') {
-  const scoredTeams = teams.map(team => ({
+export function rankTeams(teams) {
+  const scored = teams.map(team => ({
     ...team,
-    scoreData: calculateTeamScore(team, mode)
+    scoreData: calculateTeamScore(team),
   }));
-  
-  // Sort by total score descending
-  scoredTeams.sort((a, b) => 
-    (b.scoreData?.totalScore || 0) - (a.scoreData?.totalScore || 0)
-  );
-  
-  // Add rank
-  scoredTeams.forEach((team, index) => {
-    team.rank = index + 1;
-  });
-  
-  return scoredTeams;
+
+  scored.sort((a, b) => (b.scoreData?.totalScore || 0) - (a.scoreData?.totalScore || 0));
+  scored.forEach((team, i) => { team.rank = i + 1; });
+
+  return scored;
 }
 
-// Get performance category based on score
 export function getPerformanceCategory(score) {
-  if (score >= 90) return { level: 'Excellent', color: '#10b981', description: 'Outstanding performance!' };
-  if (score >= 75) return { level: 'Strong', color: '#3b82f6', description: 'Very good progress' };
-  if (score >= 60) return { level: 'Good', color: '#f59e0b', description: 'Solid execution' };
-  if (score >= 40) return { level: 'Fair', color: '#ef4444', description: 'Room for improvement' };
-  return { level: 'Developing', color: '#6b7280', description: 'Keep building momentum' };
+  if (score >= 80) return { level: '🌟 Excellent',   color: '#22c55e', description: 'Outstanding performance!' };
+  if (score >= 65) return { level: '💪 Strong',       color: '#3b82f6', description: 'Very good progress' };
+  if (score >= 50) return { level: '👍 Good',         color: '#f59e0b', description: 'Solid execution' };
+  if (score >= 35) return { level: '📈 Developing',   color: '#f97316', description: 'Building momentum' };
+  return           { level: '⚠️ Struggling',          color: '#ef4444', description: 'Needs significant improvement' };
 }

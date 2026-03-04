@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { calculateTeamScore } from '../config/scoring-config';
 import './LiveDashboard.css';
 
 // Get gameId from URL
@@ -86,44 +87,32 @@ const LiveDashboard = () => {
     return () => unsubscribe();
   }, [gameId]);
 
-  // Calculate score - using same data source as display
+  // Calculate score using the shared scoring config
   const calculateScore = (team) => {
-    // Get data from latestRound.progress (same as display)
     const latestRound = team.latestRound || {};
     const roundProgress = latestRound.progress || {};
+    const activities = latestRound.completedActivities || [];
 
-    const cash = roundProgress.cash ?? team.cash ?? 5000;
-    const trl = roundProgress.trl ?? team.trl ?? 3;
-    const validations = roundProgress.validations ?? team.validationCount ?? 0;
-    const interviews = roundProgress.interviews ?? team.interviewCount ?? 0;
-    const founderEquity = roundProgress.founderEquity ?? 100;
-    const round = latestRound.round ?? team.currentRound ?? 1;
+    const teamForScoring = {
+      cash:               roundProgress.cash ?? team.cash ?? 0,
+      revenue:            latestRound.funding?.revenue ?? roundProgress.revenue ?? 0,
+      trl:                roundProgress.currentTRL ?? roundProgress.trl ?? team.trl ?? 0,
+      patents:            activities.includes('patentApplication') ? 1 : 0,
+      provisionalPatents: activities.includes('patentSearch') ? 1 : 0,
+      customersAcquired:  roundProgress.validationsTotal ?? roundProgress.validations ?? team.validationCount ?? 0,
+      interviews:         roundProgress.interviewsTotal ?? roundProgress.interviews ?? team.interviewCount ?? 0,
+      equityRetained:     100 - (roundProgress.investorEquity ?? latestRound.funding?.investorEquity ?? 0),
+      legalForm:          latestRound.legalForm,
+      currentRound:       latestRound.round ?? team.currentRound ?? 1,
+      founderProfiles:    team.teamProfiles,
+      grantsReceived:     latestRound.funding?.subsidy > 0 ? 1 : 0,
+      inIncubator:        activities.includes('incubatorApplication'),
+      completedActivities: activities,
+      universityLicence:  team.licenceAgreement,
+      employmentStatus:   team.employmentStatus || 'university',
+    };
 
-    let score = 0;
-
-    // Financial (max 25)
-    if (cash >= 50000) score += 25;
-    else if (cash >= 25000) score += 18;
-    else if (cash >= 10000) score += 12;
-    else if (cash >= 0) score += 5;
-    else score += 0;
-
-    // TRL (max 25)
-    score += Math.min(25, (trl - 3) * 4);
-
-    // Validation (max 25)
-    score += Math.min(15, validations * 8);
-    score += Math.min(10, interviews * 2);
-
-    // Equity (max 10)
-    if (founderEquity > 70) score += 10;
-    else if (founderEquity > 50) score += 6;
-    else score += 2;
-
-    // Round bonus (max 15)
-    score += Math.min(15, (round - 1) * 3);
-
-    return Math.round(score);
+    return calculateTeamScore(teamForScoring).totalScore;
   };
 
   // Sort and rank teams

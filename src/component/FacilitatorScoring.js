@@ -78,6 +78,8 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
               team.inIncubator = latestRound.completedActivities?.includes('incubatorApplication') || false;
               team.grantsReceived = latestRound.funding?.subsidy > 0 ? 1 : 0;
               team.pilotPrograms = latestRound.progress?.validationsTotal ?? 0;
+              team.revenue = latestRound.funding?.revenue ?? latestRound.progress?.revenue ?? 0;
+              team.employmentStatus = teamData.employmentStatus || latestRound.employmentStatus || 'university';
             }
 
             unsubRounds(); // Unsubscribe after getting data
@@ -106,8 +108,7 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
         setTeams(filteredTeams);
         
         // Use the scoring config to rank teams
-        const mode = gameMode === 'all' ? 'startup' : (gameMode || 'startup');
-        const ranked = rankTeams(filteredTeams, mode);
+        const ranked = rankTeams(filteredTeams);
         setRankedTeams(ranked);
       } catch (err) {
         console.error('Error processing teams:', err);
@@ -171,8 +172,6 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
           {rankedTeams.map((team) => {
             const scoreData = team.scoreData;
             const performance = getPerformanceCategory(scoreData?.totalScore || 0);
-            const isResearch = team.gameMode === 'research' || gameMode === 'research';
-
             return (
               <div
                 key={team.id}
@@ -205,29 +204,14 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
                       <span className="stat-value">{formatCurrency(team.cash)}</span>
                     </div>
 
-                    {isResearch ? (
-                      <>
-                        <div className="stat-item">
-                          <span className="stat-label">TRL</span>
-                          <span className="stat-value">{team.trl || 3}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Validations</span>
-                          <span className="stat-value">{team.customersAcquired || 0}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="stat-item">
-                          <span className="stat-label">Dev Hours</span>
-                          <span className="stat-value">{team.developmentHours || 0}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Customers</span>
-                          <span className="stat-value">{team.customersAcquired || 0}</span>
-                        </div>
-                      </>
-                    )}
+                    <div className="stat-item">
+                      <span className="stat-label">TRL</span>
+                      <span className="stat-value">{team.trl || 0}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Validations</span>
+                      <span className="stat-value">{team.customersAcquired || 0}</span>
+                    </div>
 
                     <div className="stat-item">
                       <span className="stat-label">Equity</span>
@@ -245,12 +229,11 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
                   </div>
                 </div>
 
-                {scoreData?.earnedBonuses?.length > 0 && (
+                {scoreData?.earnedAchievements?.length > 0 && (
                   <div className="bonuses-preview">
                     <span className="bonus-icon">🏆</span>
                     <span className="bonus-text">
-                      {scoreData.earnedBonuses.length} bonus
-                      {scoreData.earnedBonuses.length > 1 ? 'es' : ''}
+                      {scoreData.earnedAchievements.length} achievement{scoreData.earnedAchievements.length > 1 ? 's' : ''}
                     </span>
                   </div>
                 )}
@@ -299,8 +282,10 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
             </div>
             <div className="score-breakdown">
               <span>Base: {scoreData?.baseScore || 0}</span>
-              {scoreData?.bonusPoints > 0 && (
-                <span className="bonus">+{scoreData.bonusPoints} bonus</span>
+              {scoreData?.achievementTotal !== 0 && scoreData?.achievementTotal !== undefined && (
+                <span className={scoreData.achievementTotal > 0 ? 'bonus' : 'penalty'}>
+                  {scoreData.achievementTotal > 0 ? '+' : ''}{scoreData.achievementTotal} achievements
+                </span>
               )}
             </div>
           </div>
@@ -337,18 +322,18 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
           ))}
         </div>
 
-        {scoreData?.earnedBonuses?.length > 0 && (
+        {scoreData?.earnedAchievements?.length > 0 && (
           <div className="bonuses-detailed">
-            <h3>Earned Bonuses</h3>
+            <h3>Achievements</h3>
             <div className="bonuses-list">
-              {scoreData.earnedBonuses.map((bonus, index) => (
-                <div key={index} className="bonus-item">
-                  <span className="bonus-check">✓</span>
+              {scoreData.earnedAchievements.map((a, index) => (
+                <div key={index} className={`bonus-item${a.points < 0 ? ' penalty' : ''}`}>
+                  <span className="bonus-check">{a.points >= 0 ? '✓' : '✗'}</span>
                   <div className="bonus-info">
-                    <span className="bonus-name">{bonus.name}</span>
-                    <span className="bonus-desc">{bonus.description}</span>
+                    <span className="bonus-name">{a.name}</span>
+                    <span className="bonus-desc">{a.description}</span>
                   </div>
-                  <span className="bonus-points">+{bonus.points}</span>
+                  <span className="bonus-points">{a.points > 0 ? '+' : ''}{a.points}</span>
                 </div>
               ))}
             </div>
