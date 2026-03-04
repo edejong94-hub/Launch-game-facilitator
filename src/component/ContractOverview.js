@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, writeBatch, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, writeBatch, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { CheckCircle, Square, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
 import './ContractOverview.css';
@@ -132,13 +132,21 @@ export function ContractOverview({ gameId, teams }) {
       const isPending = !team.latestReview?.approved && team.latestRound;
 
       if (allVerified && isPending && team.latestRound) {
-        const roundRef = doc(db, 'games', gameId, 'teams', team.id, 'rounds', String(team.latestRound.round));
-        batch.update(roundRef, {
-          'review.approved': true,
-          'review.status': 'approved',
-          'review.reviewedAt': new Date().toISOString(),
-          'review.note': 'Bulk approved - contracts verified'
+        const reviewRef = doc(db, 'games', gameId, 'teams', team.id, 'reviews', String(team.latestRound.round));
+        batch.set(reviewRef, {
+          status: 'approved',
+          approved: true,
+          reviewedAt: serverTimestamp(),
+          note: 'Bulk approved - contracts verified',
+          roundNumber: team.latestRound.round,
+        }, { merge: true });
+
+        const teamRef = doc(db, 'games', gameId, 'teams', team.id);
+        batch.update(teamRef, {
+          status: 'playing',
+          lastApprovedRound: team.latestRound.round,
         });
+
         count++;
       }
     });
