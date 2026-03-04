@@ -60,6 +60,7 @@ const END_GAME_SCORING = {
         { id: 'grantDependent',   name: '🍼 Grant Baby',           points: -1, condition: 'onlyGrantFunding',     description: 'Only funding is grants, no revenue or investment', type: 'negative' },
         { id: 'trlStuck',         name: '🐌 Lab Rat',              points: -2, condition: 'lowTRL',               description: 'Still at TRL 4 or below',                    type: 'negative' },
         { id: 'interviewAllergic',name: '🤧 Interview Allergic',   points: -2, condition: 'fewInterviews',        description: 'Less than 3 customer interviews',            type: 'negative' },
+        { id: 'meetingAvoider',   name: '📞 Meeting Avoider',      points: -1, condition: 'fewExpertMeetings',    description: 'Used fewer than 6 expert meeting slots',     type: 'negative' },
       ],
     },
   ],
@@ -107,6 +108,7 @@ const END_GAME_SCORING = {
     },
     lowTRL:               (d) => (d.trl || 3) <= 4,
     fewInterviews:        (d) => (d.interviewCount || 0) < 3,
+    fewExpertMeetings:    (d) => (d.totalStickersUsed || 0) < 6,
   },
 
   rankings: {
