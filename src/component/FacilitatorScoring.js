@@ -80,6 +80,16 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
               team.pilotPrograms = latestRound.progress?.validationsTotal ?? 0;
               team.revenue = latestRound.funding?.revenue ?? latestRound.progress?.revenue ?? 0;
               team.employmentStatus = teamData.employmentStatus || latestRound.employmentStatus || 'university';
+              // Additional fields for achievement conditions
+              team.hiredProfiles = teamData.hiredProfiles || [];
+              team.wentNegative = teamData.wentNegative || latestRound.progress?.wentNegative || false;
+              team.leftUniversityRound = teamData.leftUniversityRound ?? null;
+              team.totalInvestment = teamData.totalInvestment ?? latestRound.progress?.totalInvestment ?? 0;
+              team.totalRevenue = teamData.totalRevenue ?? latestRound.progress?.totalRevenue ?? team.revenue ?? 0;
+              team.totalStickersUsed = teamData.totalStickersUsed ?? latestRound.progress?.totalStickersUsed ?? 0;
+              team.pivotCount = teamData.pivotCount ?? 0;
+              team.maxSpendInRound = latestRound.progress?.maxSpendInRound ?? latestRound.maxSpendInRound ?? 0;
+              team.loanInterest = latestRound.funding?.loanInterest ?? 0;
             }
 
             unsubRounds(); // Unsubscribe after getting data
@@ -229,11 +239,11 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
                   </div>
                 </div>
 
-                {scoreData?.earnedAchievements?.length > 0 && (
+                {scoreData?.achievements?.length > 0 && (
                   <div className="bonuses-preview">
                     <span className="bonus-icon">🏆</span>
                     <span className="bonus-text">
-                      {scoreData.earnedAchievements.length} achievement{scoreData.earnedAchievements.length > 1 ? 's' : ''}
+                      {scoreData.achievements.length} achievement{scoreData.achievements.length > 1 ? 's' : ''}
                     </span>
                   </div>
                 )}
@@ -282,9 +292,9 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
             </div>
             <div className="score-breakdown">
               <span>Base: {scoreData?.baseScore || 0}</span>
-              {scoreData?.achievementTotal !== 0 && scoreData?.achievementTotal !== undefined && (
-                <span className={scoreData.achievementTotal > 0 ? 'bonus' : 'penalty'}>
-                  {scoreData.achievementTotal > 0 ? '+' : ''}{scoreData.achievementTotal} achievements
+              {scoreData?.bonusPoints !== 0 && scoreData?.bonusPoints !== undefined && (
+                <span className={scoreData.bonusPoints > 0 ? 'bonus' : 'penalty'}>
+                  {scoreData.bonusPoints > 0 ? '+' : ''}{scoreData.bonusPoints} achievements
                 </span>
               )}
             </div>
@@ -298,35 +308,43 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
 
         <div className="metrics-detailed">
           <h3>Metric Breakdown</h3>
-          {scoreData && Object.entries(scoreData.metricScores || {}).map(([id, metric]) => (
-            <div key={id} className="metric-row">
-              <div className="metric-info-detailed">
-                <span className="metric-name-detailed">{metric.name}</span>
-                <span className="metric-value-detailed">{metric.actualValue}</span>
+          {scoreData?.categoryScores?.map(category => (
+            <div key={category.id}>
+              <div className="category-header">
+                <span>{category.icon} {category.name}</span>
+                <span className="category-score">{category.score.toFixed(1)} / {category.maxPoints}</span>
               </div>
-              <div className="metric-score-bar">
-                <div className="score-bar-bg">
-                  <div
-                    className="score-bar-fill"
-                    style={{ width: `${Math.min(100, metric.rawValue)}%` }}
-                  ></div>
+              {category.metrics?.map(metric => (
+                <div key={metric.id} className="metric-row">
+                  <div className="metric-info-detailed">
+                    <span className="metric-name-detailed">{metric.name}</span>
+                    <span className="metric-value-detailed">{metric.format ? metric.format(metric.value) : metric.value}</span>
+                  </div>
+                  <div className="metric-score-bar">
+                    <div className="score-bar-bg">
+                      <div
+                        className="score-bar-fill"
+                        style={{ width: `${Math.min(100, metric.percentage)}%` }}
+                      ></div>
+                    </div>
+                    <span className="score-text">
+                      {Math.round(metric.percentage)}%
+                    </span>
+                  </div>
+                  <div className="metric-contribution">
+                    +{metric.score.toFixed(1)}
+                  </div>
                 </div>
-                <span className="score-text">
-                  {Math.round(metric.rawValue)}/100
-                </span>
-              </div>
-              <div className="metric-contribution">
-                +{Math.round(metric.weightedScore)}
-              </div>
+              ))}
             </div>
           ))}
         </div>
 
-        {scoreData?.earnedAchievements?.length > 0 && (
+        {scoreData?.achievements?.length > 0 && (
           <div className="bonuses-detailed">
             <h3>Achievements</h3>
             <div className="bonuses-list">
-              {scoreData.earnedAchievements.map((a, index) => (
+              {scoreData.achievements.map((a, index) => (
                 <div key={index} className={`bonus-item${a.points < 0 ? ' penalty' : ''}`}>
                   <span className="bonus-check">{a.points >= 0 ? '✓' : '✗'}</span>
                   <div className="bonus-info">

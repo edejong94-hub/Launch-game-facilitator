@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { calculateTeamScore } from '../config/scoring-config';
+import { calculateResearchScore as calculateTeamScore } from '../config/scoring-config';
 import './LiveDashboard.css';
 
 // Get gameId from URL
@@ -93,26 +93,39 @@ const LiveDashboard = () => {
     const roundProgress = latestRound.progress || {};
     const activities = latestRound.completedActivities || [];
 
-    const teamForScoring = {
+    const teamData = {
       cash:               roundProgress.cash ?? team.cash ?? 0,
-      revenue:            latestRound.funding?.revenue ?? roundProgress.revenue ?? 0,
       trl:                roundProgress.currentTRL ?? roundProgress.trl ?? team.trl ?? 0,
-      patents:            activities.includes('patentApplication') ? 1 : 0,
-      provisionalPatents: activities.includes('patentSearch') ? 1 : 0,
-      customersAcquired:  roundProgress.validationsTotal ?? roundProgress.validations ?? team.validationCount ?? 0,
-      interviews:         roundProgress.interviewsTotal ?? roundProgress.interviews ?? team.interviewCount ?? 0,
-      equityRetained:     100 - (roundProgress.investorEquity ?? latestRound.funding?.investorEquity ?? 0),
-      legalForm:          latestRound.legalForm,
-      currentRound:       latestRound.round ?? team.currentRound ?? 1,
-      founderProfiles:    team.teamProfiles,
-      grantsReceived:     latestRound.funding?.subsidy > 0 ? 1 : 0,
-      inIncubator:        activities.includes('incubatorApplication'),
       completedActivities: activities,
-      universityLicence:  team.licenceAgreement,
+      interviewCount:     roundProgress.interviewsTotal ?? roundProgress.interviews ?? team.interviewCount ?? 0,
+      validationCount:    roundProgress.validationsTotal ?? roundProgress.validations ?? team.validationCount ?? 0,
+      investorEquity:     roundProgress.investorEquity ?? latestRound.funding?.investorEquity ?? 0,
+      licenceAgreement:   team.licenceAgreement,
+      legalForm:          latestRound.legalForm,
+      teamProfiles:       team.teamProfiles || [],
+      hiredProfiles:      team.hiredProfiles || [],
       employmentStatus:   team.employmentStatus || 'university',
+      leftUniversityRound: team.leftUniversityRound ?? null,
+      wentNegative:       team.wentNegative ?? false,
+      totalInvestment:    team.totalInvestment ?? 0,
+      totalRevenue:       latestRound.funding?.revenue ?? team.totalRevenue ?? 0,
+      employees:          latestRound.employees ?? team.employees ?? 0,
+      totalStickersUsed:  team.totalStickersUsed ?? 0,
+      pivotCount:         team.pivotCount ?? 0,
+      maxSpendInRound:    roundProgress.maxSpendInRound ?? 0,
+      loanInterest:       latestRound.funding?.loanInterest ?? 0,
+      funding:            latestRound.funding || {},
     };
 
-    return calculateTeamScore(teamForScoring).totalScore;
+    const progress = {
+      cash:            teamData.cash,
+      currentTRL:      teamData.trl,
+      investorEquity:  teamData.investorEquity,
+      interviewsTotal: teamData.interviewCount,
+      validationsTotal: teamData.validationCount,
+    };
+
+    return calculateTeamScore(teamData, progress).totalScore;
   };
 
   // Sort and rank teams
