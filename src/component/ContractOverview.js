@@ -4,8 +4,8 @@ import { db } from '../config/firebase';
 import { CheckCircle, Square, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
 import './ContractOverview.css';
 
-// Contract requirements mapped to activities
-const CONTRACT_REQUIREMENTS = {
+// Contract requirements mapped to activities — research (spin-off) game
+const RESEARCH_CONTRACT_REQUIREMENTS = {
   ttoDiscussion: { id: 'ttoMeeting', name: 'TTO Meeting', icon: '🏛️' },
   licenceNegotiation: { id: 'licenceAgreement', name: 'Licence Agreement', icon: '🏛️' },
   patentSearch: { id: 'ftoReport', name: 'FTO Report', icon: '⚖️' },
@@ -24,8 +24,36 @@ const CONTRACT_REQUIREMENTS = {
   incubatorApplication: { id: 'incubatorApp', name: 'Incubator App', icon: '🏢' },
 };
 
+// Contract requirements mapped to activities — startup game
+const STARTUP_CONTRACT_REQUIREMENTS = {
+  technicalCoach: { id: 'technicalCoachAdvisory', name: 'Technical Coach Advisory', icon: '🔬' },
+  seniorTechnicalPartner: { id: 'seniorTechnicalPartnership', name: 'Senior Technical Partnership', icon: '🔬' },
+  businessDeveloper: { id: 'businessDeveloperAdvisory', name: 'Business Developer Advisory', icon: '🤝' },
+  customerInterviews: { id: 'interviewLog', name: 'Interview Log', icon: '🤝' },
+  customerValidation: { id: 'loi', name: 'Letter of Intent', icon: '🤝' },
+  legalAdvisor: { id: 'legalAdvisorLetter', name: 'Legal Advisor Letter', icon: '📝' },
+  patentConsult: { id: 'patentConsultAdvisory', name: 'IP / Patent Expert Advisory', icon: '🔒' },
+  knowHowProtection: { id: 'knowHowProtection', name: 'Know-How Protection', icon: '🔒' },
+  patentOutsourced: { id: 'patentFiling', name: 'Patent Filing', icon: '🔒' },
+  investorMeeting: { id: 'pitchDeck', name: 'Pitch Deck Feedback', icon: '💰' },
+  investorNegotiation: { id: 'termSheet', name: 'Term Sheet', icon: '💰' },
+  bankMeeting: { id: 'loanApplication', name: 'Loan Application', icon: '🏦' },
+  loanApplication: { id: 'loanAgreement', name: 'Loan Agreement', icon: '🏦' },
+  raboInnovatielening: { id: 'raboInnovatielening', name: 'Rabo Innovatielening', icon: '🏦' },
+  subsidyAdvisor: { id: 'grantApplication', name: 'Grant Application', icon: '📋' },
+  grantTakeoff: { id: 'grantApp', name: 'Grant Application', icon: '📋' },
+  grantWBSO: { id: 'grantAppWBSO', name: 'WBSO Grant', icon: '📋' },
+  grantRegional: { id: 'grantAppRegional', name: 'Regional Grant', icon: '📋' },
+  incubatorMeeting: { id: 'incubatorApp', name: 'Incubator Application', icon: '🏢' },
+  incubatorApplication: { id: 'incubatorApp', name: 'Incubator Application', icon: '🏢' },
+};
+
 // Get required contracts for a team based on their activities
 export function getRequiredContracts(team, verifiedContracts = {}) {
+  const CONTRACT_REQUIREMENTS = team.gameMode === 'startup'
+    ? STARTUP_CONTRACT_REQUIREMENTS
+    : RESEARCH_CONTRACT_REQUIREMENTS;
+
   const activities = [];
 
   // Get activities from latest round

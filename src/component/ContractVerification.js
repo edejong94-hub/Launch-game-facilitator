@@ -4,8 +4,8 @@ import { db } from '../config/firebase';
 import { CheckCircle, XCircle, FileText, AlertTriangle } from 'lucide-react';
 import './ContractVerification.css';
 
-// Expert contract requirements
-const EXPERT_CONTRACTS = {
+// Expert contract requirements — research (spin-off) game
+const RESEARCH_EXPERT_CONTRACTS = {
   tto: {
     name: "TTO Officer",
     icon: "🏛️",
@@ -70,10 +70,82 @@ const EXPERT_CONTRACTS = {
   },
 };
 
+// Expert contract requirements — startup game
+const STARTUP_EXPERT_CONTRACTS = {
+  technicalCoach: {
+    name: "Technical Coach",
+    icon: "🔬",
+    contracts: [
+      { id: "technicalCoachAdvisory", name: "Technical Coach Advisory", activities: ["technicalCoach"] },
+      { id: "seniorTechnicalPartnership", name: "Senior Technical Partnership", activities: ["seniorTechnicalPartner"] },
+    ],
+  },
+  businessDeveloper: {
+    name: "Business Developer",
+    icon: "🤝",
+    contracts: [
+      { id: "businessDeveloperAdvisory", name: "Business Developer Advisory", activities: ["businessDeveloper"] },
+      { id: "interviewLog", name: "Interview Log", activities: ["customerInterviews"] },
+      { id: "loi", name: "Letter of Intent", activities: ["customerValidation"] },
+    ],
+  },
+  legal: {
+    name: "Legal Advisor",
+    icon: "📝",
+    contracts: [
+      { id: "legalAdvisorLetter", name: "Legal Advisor Letter", activities: ["legalAdvisor"] },
+    ],
+  },
+  patent: {
+    name: "IP / Patent Expert",
+    icon: "🔒",
+    contracts: [
+      { id: "patentConsultAdvisory", name: "IP / Patent Expert Advisory", activities: ["patentConsult"] },
+      { id: "knowHowProtection", name: "Know-How Protection", activities: ["knowHowProtection"] },
+      { id: "patentFiling", name: "Patent Filing", activities: ["patentOutsourced", "patentFiling"] },
+    ],
+  },
+  investor: {
+    name: "Investor / VC",
+    icon: "💰",
+    contracts: [
+      { id: "pitchDeck", name: "Pitch Deck Feedback", activities: ["investorMeeting"] },
+      { id: "termSheet", name: "Term Sheet", activities: ["investorNegotiation"] },
+    ],
+  },
+  bank: {
+    name: "Bank",
+    icon: "🏦",
+    contracts: [
+      { id: "loanApplication", name: "Loan Application", activities: ["bankMeeting"] },
+      { id: "loanAgreement", name: "Loan Agreement", activities: ["loanApplication"] },
+      { id: "raboInnovatielening", name: "Rabo Innovatielening", activities: ["raboInnovatielening"] },
+    ],
+  },
+  grant: {
+    name: "Subsidy & Grant Advisor",
+    icon: "📋",
+    contracts: [
+      { id: "grantApplication", name: "Grant Application", activities: ["subsidyAdvisor", "grantTakeoff", "grantWBSO", "grantRegional"] },
+    ],
+  },
+  incubator: {
+    name: "Incubator / Accelerator",
+    icon: "🏢",
+    contracts: [
+      { id: "incubatorApp", name: "Incubator Application", activities: ["incubatorMeeting", "incubatorApplication"] },
+    ],
+  },
+};
+
 export function ContractVerification({ gameId, teamId, teamData, roundData }) {
   const [verifiedContracts, setVerifiedContracts] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const EXPERT_CONTRACTS = teamData?.gameMode === 'startup'
+    ? STARTUP_EXPERT_CONTRACTS
+    : RESEARCH_EXPERT_CONTRACTS;
 
   // Get completed activities from round data
   const completedActivities = roundData?.completedActivities || [];
