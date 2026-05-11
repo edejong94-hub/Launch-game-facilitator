@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { createGame } from '../hooks/useReviews';
 import './GameSelector.css';
 
 const GameSelector = ({ onSelectGame, currentGameId }) => {
@@ -9,6 +10,7 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newGameName, setNewGameName] = useState('');
+  const [newGameMode, setNewGameMode] = useState(null);
   const [creating, setCreating] = useState(false);
 
   // Load all games from Firebase
@@ -41,31 +43,28 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
   // Create a new game
   const handleCreateGame = async (e) => {
     e.preventDefault();
-    if (!newGameName.trim()) return;
+    if (!newGameName.trim() || !newGameMode) return;
 
     try {
       setCreating(true);
-      const docRef = await addDoc(collection(db, 'games'), {
-        name: newGameName.trim(),
-        createdAt: serverTimestamp(),
-        currentRound: 1,
-        status: 'active',
-      });
+      const id = await createGame(newGameName.trim(), newGameMode);
 
       // Add to local list
       setGames(prev => [{
-        id: docRef.id,
+        id,
         name: newGameName.trim(),
+        gameMode: newGameMode,
         createdAt: new Date(),
         currentRound: 1,
         status: 'active',
       }, ...prev]);
 
-      // Select the new game (no gameMode — created without mode in this form)
-      onSelectGame(docRef.id, newGameName.trim(), null);
+      // Select the new game with its locked mode
+      onSelectGame(id, newGameName.trim(), newGameMode);
 
       // Reset form
       setNewGameName('');
+      setNewGameMode(null);
       setShowCreateForm(false);
     } catch (err) {
       console.error('Error creating game:', err);
@@ -134,6 +133,7 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
       {showCreateForm && (
         <form className="create-game-form" onSubmit={handleCreateGame}>
           <h3>Create New Game Session</h3>
+
           <div className="form-row">
             <input
               type="text"
@@ -143,8 +143,68 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
               autoFocus
               disabled={creating}
             />
-            <button type="submit" disabled={!newGameName.trim() || creating}>
-              {creating ? 'Creating...' : 'Create Game'}
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+            {[
+              { value: 'research', icon: '🔬', label: 'Research Game', sub: 'TRL · TTO · Patents' },
+              { value: 'startup',  icon: '🚀', label: 'Startup Game',  sub: 'Customer Dev · Pivots' },
+            ].map(opt => {
+              const selected = newGameMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setNewGameMode(opt.value)}
+                  disabled={creating}
+                  style={{
+                    flex: 1,
+                    padding: '14px 12px',
+                    borderRadius: '10px',
+                    border: selected
+                      ? `2px solid ${opt.value === 'startup' ? '#7c3aed' : '#0369a1'}`
+                      : '2px solid rgba(245,158,11,0.15)',
+                    background: selected
+                      ? opt.value === 'startup' ? 'rgba(124,58,237,0.2)' : 'rgba(3,105,161,0.2)'
+                      : 'rgba(0,0,0,0.25)',
+                    color: selected
+                      ? opt.value === 'startup' ? '#c4b5fd' : '#7dd3fc'
+                      : '#9ca3af',
+                    cursor: creating ? 'not-allowed' : 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>{opt.icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: '14px' }}>{opt.label}</div>
+                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '2px' }}>{opt.sub}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ marginTop: '12px' }}>
+            <button
+              type="submit"
+              disabled={!newGameName.trim() || !newGameMode || creating}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: newGameName.trim() && newGameMode
+                  ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                  : 'rgba(255,255,255,0.08)',
+                color: newGameName.trim() && newGameMode ? '#1a0800' : '#6b7280',
+                fontWeight: 700,
+                fontSize: '15px',
+                cursor: newGameName.trim() && newGameMode ? 'pointer' : 'not-allowed',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {creating ? 'Creating...' : newGameMode
+                ? `Create ${newGameMode === 'research' ? 'Research' : 'Startup'} Game`
+                : 'Select a game type above'}
             </button>
           </div>
         </form>
