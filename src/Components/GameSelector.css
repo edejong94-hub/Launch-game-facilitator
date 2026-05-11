@@ -1,7 +1,7 @@
-/* Game Selector Styles */
+/* Game Selector Styles — Facilitator identity (amber/gold) */
 .game-selector {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  background: radial-gradient(circle at top left, #1c1407, #0a0a0a 55%);
   color: #e2e8f0;
   padding: 2rem;
 }
@@ -18,8 +18,8 @@
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid rgba(99, 102, 241, 0.2);
-  border-top-color: #6366f1;
+  border: 4px solid rgba(245, 158, 11, 0.2);
+  border-top-color: #f59e0b;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -34,14 +34,14 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
   margin-bottom: 2rem;
 }
 
 .header-content h1 {
   margin: 0;
   font-size: 2rem;
-  background: linear-gradient(135deg, #a5b4fc, #c4b5fd);
+  background: linear-gradient(135deg, #fcd34d, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -49,25 +49,29 @@
 
 .header-subtitle {
   margin: 0.25rem 0 0;
-  color: #64748b;
+  color: #78716c;
   font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .create-game-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   border: none;
   border-radius: 10px;
-  color: white;
-  font-weight: 600;
+  color: #1a0800;
+  font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
 }
 
 .create-game-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
 }
 
 /* Error Banner */
@@ -93,8 +97,8 @@
 
 /* Create Game Form */
 .create-game-form {
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
   border-radius: 12px;
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -102,7 +106,7 @@
 
 .create-game-form h3 {
   margin: 0 0 1rem;
-  color: #a5b4fc;
+  color: #fcd34d;
 }
 
 .form-row {
@@ -113,8 +117,8 @@
 .form-row input {
   flex: 1;
   padding: 0.875rem 1rem;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(245, 158, 11, 0.25);
   border-radius: 8px;
   color: #f5f5f5;
   font-size: 1rem;
@@ -122,27 +126,29 @@
 
 .form-row input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
 }
 
 .form-row input::placeholder {
-  color: #64748b;
+  color: #57534e;
 }
 
 .form-row button {
   padding: 0.875rem 1.5rem;
-  background: #22c55e;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   border: none;
   border-radius: 8px;
-  color: white;
-  font-weight: 600;
+  color: #1a0800;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .form-row button:hover:not(:disabled) {
-  background: #16a34a;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
 }
 
 .form-row button:disabled {
@@ -181,7 +187,7 @@
 
 .no-games .hint {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #57534e;
 }
 
 /* Games Grid */
@@ -193,8 +199,8 @@
 
 /* Game Card */
 .game-card {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-  border: 2px solid rgba(99, 102, 241, 0.2);
+  background: linear-gradient(145deg, rgba(30, 20, 5, 0.85), rgba(10, 10, 10, 0.95));
+  border: 1px solid rgba(245, 158, 11, 0.18);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
@@ -202,14 +208,15 @@
 }
 
 .game-card:hover {
-  border-color: rgba(99, 102, 241, 0.5);
+  border-color: rgba(245, 158, 11, 0.45);
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.15);
 }
 
 .game-card.selected {
-  border-color: #22c55e;
-  background: linear-gradient(145deg, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.9));
+  border-color: #f59e0b;
+  background: linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(10, 10, 10, 0.95));
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
 }
 
 .game-card-header {
@@ -243,7 +250,7 @@
   justify-content: space-between;
   padding: 0.5rem 0;
   font-size: 0.875rem;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.08);
 }
 
 .detail-row:last-child {
@@ -251,7 +258,7 @@
 }
 
 .detail-label {
-  color: #64748b;
+  color: #78716c;
 }
 
 .detail-value {
@@ -260,19 +267,19 @@
 
 .detail-value code {
   font-family: monospace;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   font-size: 0.8125rem;
 }
 
 .selected-badge {
-  background: rgba(34, 197, 94, 0.2);
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 8px;
   padding: 0.5rem;
   text-align: center;
-  color: #4ade80;
+  color: #fcd34d;
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -281,23 +288,26 @@
 .open-game-btn {
   width: 100%;
   padding: 0.875rem;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   border: none;
   border-radius: 10px;
-  color: white;
-  font-weight: 600;
+  color: #1a0800;
+  font-weight: 700;
   font-size: 0.9375rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
 }
 
 .open-game-btn:hover {
-  filter: brightness(1.1);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
 }
 
 /* Quick Access */
 .quick-access {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.1);
   border-radius: 12px;
   padding: 1.5rem;
 }
@@ -305,7 +315,7 @@
 .quick-access h3 {
   margin: 0 0 1rem;
   font-size: 1rem;
-  color: #94a3b8;
+  color: #78716c;
 }
 
 .quick-access form {
@@ -317,7 +327,7 @@
   flex: 1;
   padding: 0.75rem 1rem;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid #333;
+  border: 1px solid rgba(245, 158, 11, 0.15);
   border-radius: 8px;
   color: #f5f5f5;
   font-family: monospace;
@@ -325,21 +335,23 @@
 
 .quick-access input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #f59e0b;
 }
 
 .quick-access button {
   padding: 0.75rem 1.5rem;
-  background: #6366f1;
-  border: none;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 8px;
-  color: white;
+  color: #fcd34d;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .quick-access button:hover {
-  background: #4f46e5;
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.5);
 }
 
 /* Responsive */
