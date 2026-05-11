@@ -72,6 +72,24 @@ const EditTeamModal = ({ team, gameId, onClose, onSaved }) => {
         'progress.validationsTotal': Number(formData.validationCount),
         'progress.investorEquity': Number(formData.investorEquity),
 
+        // Facilitator correction — student app listens to this field for real-time updates
+        facilitatorCorrection: {
+          correctionId: Date.now(),
+          reason: editReason,
+          values: {
+            cash: Number(formData.cash),
+            trl: Number(formData.trl),
+            interviewCount: Number(formData.interviewCount),
+            validationCount: Number(formData.validationCount),
+            investorEquity: Number(formData.investorEquity),
+            employees: Number(formData.employees),
+            employmentStatus: formData.employmentStatus,
+            licenceAgreement: formData.licenceAgreement || null,
+            legalForm: formData.legalForm || null,
+            office: formData.office,
+          },
+        },
+
         // Metadata
         lastEditedAt: serverTimestamp(),
         lastEditedBy: 'facilitator',
@@ -82,28 +100,25 @@ const EditTeamModal = ({ team, gameId, onClose, onSaved }) => {
 
       // Also update the current round document
       const roundRef = doc(db, 'games', gameId, 'teams', teamId, 'rounds', String(formData.currentRound));
-      try {
-        await updateDoc(roundRef, {
-          'progress.cash': Number(formData.cash),
-          'progress.trl': Number(formData.trl),
-          'progress.currentTRL': Number(formData.trl),
-          'progress.interviews': Number(formData.interviewCount),
-          'progress.interviewsTotal': Number(formData.interviewCount),
-          'progress.validations': Number(formData.validationCount),
-          'progress.validationsTotal': Number(formData.validationCount),
-          'progress.investorEquity': Number(formData.investorEquity),
-          employees: Number(formData.employees),
-          employmentStatus: formData.employmentStatus,
-          licenceAgreement: formData.licenceAgreement || null,
-          legalForm: formData.legalForm || null,
-          office: formData.office,
-          facilitatorEdited: true,
-          facilitatorEditReason: editReason,
-          facilitatorEditAt: serverTimestamp(),
-        });
-      } catch (roundError) {
-        console.log('Could not update round doc, may not exist:', roundError);
-      }
+      // Use setDoc with merge:true so it creates the doc if it doesn't exist yet
+      await setDoc(roundRef, {
+        'progress.cash': Number(formData.cash),
+        'progress.trl': Number(formData.trl),
+        'progress.currentTRL': Number(formData.trl),
+        'progress.interviews': Number(formData.interviewCount),
+        'progress.interviewsTotal': Number(formData.interviewCount),
+        'progress.validations': Number(formData.validationCount),
+        'progress.validationsTotal': Number(formData.validationCount),
+        'progress.investorEquity': Number(formData.investorEquity),
+        employees: Number(formData.employees),
+        employmentStatus: formData.employmentStatus,
+        licenceAgreement: formData.licenceAgreement || null,
+        legalForm: formData.legalForm || null,
+        office: formData.office,
+        facilitatorEdited: true,
+        facilitatorEditReason: editReason,
+        facilitatorEditAt: serverTimestamp(),
+      }, { merge: true });
 
       // Add to edit history
       const historyRef = doc(collection(db, 'games', gameId, 'teams', teamId, 'editHistory'));
