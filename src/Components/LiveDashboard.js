@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { rankTeams } from '../config/scoring-config';
+import { rankTeamsByMode } from '../config/scoring-config';
 import './LiveDashboard.css';
 
 // Get gameId from URL
@@ -89,7 +89,8 @@ const LiveDashboard = () => {
 
   // Pre-map latestRound fields to flat properties, identical to FacilitatorScoring.js,
   // then rank via the shared rankTeams function — single scoring code path.
-  const rankedTeams = rankTeams(
+  const gameMode = getGameMode();
+  const rankedTeams = rankTeamsByMode(
     teams.map(team => {
       const latestRound = team.latestRound || {};
       const roundProgress = latestRound.progress || {};
@@ -114,7 +115,8 @@ const LiveDashboard = () => {
         totalStickersUsed: team.totalStickersUsed ?? 0,
         pivotCount:       team.pivotCount ?? 0,
       };
-    })
+    }),
+    gameMode
   );
 
   // Get display values
@@ -233,9 +235,11 @@ const LiveDashboard = () => {
                   <div className="team-info">
                     <div className="team-name">{team.teamName}</div>
                     <div className="team-meta">
-                      <span className="employment-badge">
-                        {getEmploymentIcon(data.employmentStatus)}
-                      </span>
+                      {isResearchMode && (
+                        <span className="employment-badge">
+                          {getEmploymentIcon(data.employmentStatus)}
+                        </span>
+                      )}
                       <span className="round-badge">Round {data.round}</span>
                     </div>
                   </div>

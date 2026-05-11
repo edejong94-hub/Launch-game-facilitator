@@ -29,6 +29,10 @@ function App() {
     return localStorage.getItem("facilitator_selected_game_name") || null;
   });
 
+  const [selectedGameMode, setSelectedGameMode] = useState(() => {
+    return localStorage.getItem("facilitator_selected_game_mode") || null;
+  });
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -53,27 +57,35 @@ function App() {
     }
   };
 
-  const handleGameChange = (newGameId, newGameName) => {
+  const handleGameChange = (newGameId, newGameName, newGameMode) => {
     // Update the selected game when creating/changing games from AdminPanel
     setSelectedGameId(newGameId);
     setSelectedGameName(newGameName || 'Unknown Game');
+    setSelectedGameMode(newGameMode || null);
 
     // Persist to localStorage
     localStorage.setItem('facilitator_selected_game', newGameId);
     if (newGameName) {
       localStorage.setItem('facilitator_selected_game_name', newGameName);
     }
+    if (newGameMode) {
+      localStorage.setItem('facilitator_selected_game_mode', newGameMode);
+    }
   };
 
   // Handler for game selection from GameSelector
-  const handleSelectGame = (gameId, gameName) => {
+  const handleSelectGame = (gameId, gameName, gameMode) => {
     setSelectedGameId(gameId);
     setSelectedGameName(gameName || 'Unknown Game');
+    setSelectedGameMode(gameMode || null);
 
     // Remember selection in localStorage
     localStorage.setItem('facilitator_selected_game', gameId);
     if (gameName) {
       localStorage.setItem('facilitator_selected_game_name', gameName);
+    }
+    if (gameMode) {
+      localStorage.setItem('facilitator_selected_game_mode', gameMode);
     }
   };
 
@@ -81,8 +93,10 @@ function App() {
   const handleBackToGameSelector = () => {
     setSelectedGameId(null);
     setSelectedGameName(null);
+    setSelectedGameMode(null);
     localStorage.removeItem('facilitator_selected_game');
     localStorage.removeItem('facilitator_selected_game_name');
+    localStorage.removeItem('facilitator_selected_game_mode');
   };
 
   if (authLoading) {
@@ -125,7 +139,7 @@ function App() {
             <>
               {/* Back to games button - moved to sidebar footer via Shell component */}
 
-              <Shell user={user} onLogout={handleLogout} onBackToGames={handleBackToGameSelector}>
+              <Shell user={user} onLogout={handleLogout} onBackToGames={handleBackToGameSelector} gameMode={selectedGameMode}>
                 <Routes>
                   <Route
                     path="/"
@@ -133,6 +147,7 @@ function App() {
                       <Dashboard
                         gameId={selectedGameId}
                         gameName={selectedGameName}
+                        gameMode={selectedGameMode}
                       />
                     }
                   />
@@ -142,12 +157,13 @@ function App() {
                       <Dashboard
                         gameId={selectedGameId}
                         gameName={selectedGameName}
+                        gameMode={selectedGameMode}
                       />
                     }
                   />
                   <Route
                     path="/team/:teamId"
-                    element={<TeamPage gameId={selectedGameId} userEmail={user.email} />}
+                    element={<TeamPage gameId={selectedGameId} userEmail={user.email} gameMode={selectedGameMode} />}
                   />
                   <Route
                     path="/admin"
@@ -155,6 +171,7 @@ function App() {
                       <AdminPanel
                         gameId={selectedGameId}
                         gameName={selectedGameName}
+                        gameMode={selectedGameMode}
                         onGameChange={handleGameChange}
                       />
                     }

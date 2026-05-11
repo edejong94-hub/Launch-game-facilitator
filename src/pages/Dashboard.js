@@ -19,11 +19,14 @@ import FacilitatorScoring from "../component/FacilitatorScoring";
 import ContractOverview from "../component/ContractOverview";
 import EditTeamModal from "../Components/EditTeamModal";
 
-export function Dashboard({ gameId, gameName }) {
-  // Game mode state
+export function Dashboard({ gameId, gameName, gameMode }) {
+  // Game mode state — only used as a cross-game filter when no specific gameMode is provided
   const [mode, setMode] = useState(
     localStorage.getItem("facilitatorMode") || "all"
   );
+
+  // Use the session's gameMode when available, fall back to local filter
+  const effectiveMode = gameMode || mode;
 
   // View toggle state (teams or scoring)
   const [view, setView] = useState("teams"); // 'teams' or 'scoring'
@@ -35,7 +38,7 @@ export function Dashboard({ gameId, gameName }) {
   // Edit team modal state
   const [editingTeam, setEditingTeam] = useState(null);
 
-  const { teams, loading, error } = useTeams(gameId, mode);
+  const { teams, loading, error } = useTeams(gameId, effectiveMode);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -193,7 +196,7 @@ export function Dashboard({ gameId, gameName }) {
             className="launch-live-btn"
             onClick={() => {
               // Open live scores in student app, in a new window optimized for projection
-              const liveMode = mode === 'all' ? 'research' : mode;
+              const liveMode = effectiveMode === 'all' ? 'research' : effectiveMode;
               const liveWindow = window.open(
                 `https://launchgame.netlify.app/live?gameId=${gameId}&mode=${liveMode}`,
                 'LiveScores',
@@ -365,17 +368,19 @@ export function Dashboard({ gameId, gameName }) {
               />
             </div>
 
-            <div className="filter-group">
-              <span className="filter-label">Game type:</span>
-              <select
-                value={mode}
-                onChange={(e) => handleModeChange(e.target.value)}
-              >
-                <option value="all">All games</option>
-                <option value="startup">Startup</option>
-                <option value="research">Research</option>
-              </select>
-            </div>
+            {!gameMode && (
+              <div className="filter-group">
+                <span className="filter-label">Game type:</span>
+                <select
+                  value={mode}
+                  onChange={(e) => handleModeChange(e.target.value)}
+                >
+                  <option value="all">All games</option>
+                  <option value="startup">Startup</option>
+                  <option value="research">Research</option>
+                </select>
+              </div>
+            )}
 
             <div className="filter-group">
               <Filter size={16} />
@@ -441,7 +446,7 @@ export function Dashboard({ gameId, gameName }) {
       {view === "scoring" && (
         <FacilitatorScoring
           gameSession={gameId}
-          gameMode={mode}
+          gameMode={effectiveMode}
         />
       )}
 

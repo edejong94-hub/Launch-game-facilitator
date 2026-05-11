@@ -107,16 +107,17 @@ export async function deleteRound(gameId, teamId, roundNumber) {
   await deleteDoc(reviewRef);
 }
 
-export async function createGame(gameName) {
+export async function createGame(gameName, gameMode) {
   const gameRef = doc(collection(db, 'games'));
-  
+
   await setDoc(gameRef, {
     name: gameName,
+    gameMode: gameMode || 'research',
     createdAt: serverTimestamp(),
     status: 'active',
     currentRound: 1
   });
-  
+
   return gameRef.id;
 }
 

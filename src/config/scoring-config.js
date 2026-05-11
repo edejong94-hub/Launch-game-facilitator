@@ -1,5 +1,8 @@
-// Unified scoring — mirrors research-config.js from the student app exactly.
+// Research game scoring — mirrors research-config.js from the student app exactly.
 // Keep these two files in sync whenever scoring rules change.
+// For startup game scoring see startup-scoring-config.js.
+
+import { rankStartupTeams } from './startup-scoring-config';
 
 const END_GAME_SCORING = {
   categories: [
@@ -232,6 +235,14 @@ export function rankTeams(teams) {
   scored.forEach((team, i) => { team.rank = i + 1; });
 
   return scored;
+}
+
+// Routes to the correct scoring function based on game mode.
+export function rankTeamsByMode(teams, gameMode) {
+  if (gameMode === 'startup') {
+    return rankStartupTeams(teams);
+  }
+  return rankTeams(teams);
 }
 
 export function getPerformanceCategory(score) {

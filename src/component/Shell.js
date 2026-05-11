@@ -9,7 +9,7 @@ import {
   BarChart3,
 } from "lucide-react";
 
-export function Shell({ children, user, onLogout, onBackToGames }) {
+export function Shell({ children, user, onLogout, onBackToGames, gameMode }) {
   const location = useLocation();
 
   const navItems = [
@@ -29,6 +29,20 @@ export function Shell({ children, user, onLogout, onBackToGames }) {
           <div className="brand">
             <h1>Launch Game</h1>
             <p>Facilitator</p>
+            {gameMode && (
+              <span style={{
+                display: 'inline-block',
+                marginTop: '4px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                backgroundColor: gameMode === 'startup' ? '#7c3aed' : '#0369a1',
+                color: '#fff',
+              }}>
+                {gameMode === 'startup' ? '🚀 Startup' : '🔬 Research'}
+              </span>
+            )}
           </div>
         </div>
 

@@ -61,8 +61,8 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
         status: 'active',
       }, ...prev]);
 
-      // Select the new game
-      onSelectGame(docRef.id, newGameName.trim());
+      // Select the new game (no gameMode — created without mode in this form)
+      onSelectGame(docRef.id, newGameName.trim(), null);
 
       // Reset form
       setNewGameName('');
@@ -162,46 +162,66 @@ const GameSelector = ({ onSelectGame, currentGameId }) => {
           </div>
         ) : (
           <div className="games-grid">
-            {games.map(game => (
-              <div
-                key={game.id}
-                className={`game-card ${currentGameId === game.id ? 'selected' : ''}`}
-                onClick={() => onSelectGame(game.id, game.name)}
-              >
-                <div className="game-card-header">
-                  <h3>{game.name || 'Unnamed Game'}</h3>
-                  <span
-                    className="game-status"
-                    style={{ backgroundColor: getStatusColor(game.status) }}
-                  >
-                    {game.status || 'active'}
-                  </span>
+            {games.map(game => {
+              const modeLabel = game.gameMode === 'startup' ? '🚀 Startup' : game.gameMode === 'research' ? '🔬 Research' : null;
+              return (
+                <div
+                  key={game.id}
+                  className={`game-card ${currentGameId === game.id ? 'selected' : ''}`}
+                  onClick={() => onSelectGame(game.id, game.name, game.gameMode || null)}
+                >
+                  <div className="game-card-header">
+                    <h3>{game.name || 'Unnamed Game'}</h3>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      {modeLabel && (
+                        <span
+                          className="game-mode-badge"
+                          style={{
+                            backgroundColor: game.gameMode === 'startup' ? '#7c3aed' : '#0369a1',
+                            color: '#fff',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {modeLabel}
+                        </span>
+                      )}
+                      <span
+                        className="game-status"
+                        style={{ backgroundColor: getStatusColor(game.status) }}
+                      >
+                        {game.status || 'active'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="game-card-details">
+                    <div className="detail-row">
+                      <span className="detail-label">Game ID:</span>
+                      <code className="detail-value">{game.id.slice(0, 12)}...</code>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Created:</span>
+                      <span className="detail-value">{formatDate(game.createdAt)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Current Round:</span>
+                      <span className="detail-value">{game.currentRound || 1}</span>
+                    </div>
+                  </div>
+
+                  {currentGameId === game.id && (
+                    <div className="selected-badge">✓ Currently Selected</div>
+                  )}
+
+                  <button className="open-game-btn">
+                    Open Dashboard →
+                  </button>
                 </div>
-
-                <div className="game-card-details">
-                  <div className="detail-row">
-                    <span className="detail-label">Game ID:</span>
-                    <code className="detail-value">{game.id.slice(0, 12)}...</code>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Created:</span>
-                    <span className="detail-value">{formatDate(game.createdAt)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Current Round:</span>
-                    <span className="detail-value">{game.currentRound || 1}</span>
-                  </div>
-                </div>
-
-                {currentGameId === game.id && (
-                  <div className="selected-badge">✓ Currently Selected</div>
-                )}
-
-                <button className="open-game-btn">
-                  Open Dashboard →
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

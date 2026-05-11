@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { rankTeams, getPerformanceCategory } from '../config/scoring-config';
+import { rankTeamsByMode, getPerformanceCategory } from '../config/scoring-config';
 import './FacilitatorScoring.css';
 
 const FacilitatorScoring = ({ gameSession, gameMode }) => {
@@ -118,7 +118,7 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
         setTeams(filteredTeams);
         
         // Use the scoring config to rank teams
-        const ranked = rankTeams(filteredTeams);
+        const ranked = rankTeamsByMode(filteredTeams, gameMode);
         setRankedTeams(ranked);
       } catch (err) {
         console.error('Error processing teams:', err);
@@ -214,10 +214,18 @@ const FacilitatorScoring = ({ gameSession, gameMode }) => {
                       <span className="stat-value">{formatCurrency(team.cash)}</span>
                     </div>
 
-                    <div className="stat-item">
-                      <span className="stat-label">TRL</span>
-                      <span className="stat-value">{team.trl || 0}</span>
-                    </div>
+                    {gameMode === 'research' ? (
+                      <div className="stat-item">
+                        <span className="stat-label">TRL</span>
+                        <span className="stat-value">{team.trl || 0}</span>
+                      </div>
+                    ) : (
+                      <div className="stat-item">
+                        <span className="stat-label">Interviews</span>
+                        <span className="stat-value">{team.interviews || 0}</span>
+                      </div>
+                    )}
+
                     <div className="stat-item">
                       <span className="stat-label">Validations</span>
                       <span className="stat-value">{team.customersAcquired || 0}</span>
