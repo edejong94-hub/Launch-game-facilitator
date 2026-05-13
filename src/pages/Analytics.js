@@ -26,6 +26,38 @@ const FUNDING_COLORS = {
   subsidy: '#3b82f6'
 };
 
+// Maps activity IDs (stored in completedActivities) to their expert adviser category
+const ACTIVITY_EXPERT_MAP = {
+  ttoDiscussion:        'TTO Officer',
+  licenceNegotiation:   'TTO Officer',
+  patentFiling:         'Patent Attorney',
+  knowHowProtection:    'Patent Attorney',
+  patentAnalysis:       'Patent Attorney',
+  grantTakeoff:         'Grant Advisor',
+  grantWBSO:            'Grant Advisor',
+  grantRegional:        'Grant Advisor',
+  subsidyApplication:   'Grant Advisor',
+  incubatorApplication: 'Incubator',
+  investorMeeting:      'VC / Investor',
+  customerInterview:    'Customer Expert',
+  customerInterviews:   'Customer Expert',
+  customerValidation:   'Customer Expert',
+  industryPartner:      'Industry Partner',
+  bankMeeting:          'Bank / Loan Officer',
+  bankLoan:             'Bank / Loan Officer',
+};
+
+const EXPERT_COLORS = {
+  'TTO Officer':       '#8b5cf6',
+  'Patent Attorney':   '#6366f1',
+  'Grant Advisor':     '#3b82f6',
+  'Incubator':         '#06b6d4',
+  'VC / Investor':     '#ef4444',
+  'Customer Expert':   '#22c55e',
+  'Industry Partner':  '#f97316',
+  'Bank / Loan Officer': '#f59e0b',
+};
+
 export function Analytics() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -231,14 +263,14 @@ export function Analytics() {
 
     // Funding Strategy Data (stacked bar)
     allTeams.forEach((team, idx) => {
-      const funding = team.funding || {};
       const lastRound = team.rounds?.[team.rounds.length - 1];
-      const roundFunding = lastRound?.funding || {};
 
-      const investment = parseFloat(roundFunding.investment || funding.investment || 0);
-      const loan = parseFloat(roundFunding.loan || funding.loan || 0);
-      const revenue = parseFloat(roundFunding.revenue || funding.revenue || 0);
-      const subsidy = parseFloat(roundFunding.subsidy || funding.subsidy || 0);
+      // investment and revenue are stored as cumulative totals on the round doc
+      const investment = parseFloat(lastRound?.totalInvestment || 0);
+      const revenue    = parseFloat(lastRound?.totalRevenue    || 0);
+      // subsidy and loan are per-round only — sum across all rounds
+      const subsidy = team.rounds?.reduce((sum, r) => sum + parseFloat(r.funding?.subsidy || 0), 0) || 0;
+      const loan    = team.rounds?.reduce((sum, r) => sum + parseFloat(r.funding?.loan    || 0), 0) || 0;
 
       data.fundingStrategy.push({
         name: team.teamName || `Team ${idx + 1}`,
@@ -309,12 +341,14 @@ export function Analytics() {
 
       totalRounds += team.rounds?.length || 0;
 
-      // Count funding types used
-      const funding = lastRound?.funding || team.funding || {};
-      if (parseFloat(funding.investment || 0) > 0) fundingCounts.investment++;
-      if (parseFloat(funding.loan || 0) > 0) fundingCounts.loan++;
-      if (parseFloat(funding.revenue || 0) > 0) fundingCounts.revenue++;
-      if (parseFloat(funding.subsidy || 0) > 0) fundingCounts.subsidy++;
+      // Count funding types used (same cumulative logic as the funding strategy chart)
+      const teamLastRound = team.rounds?.[team.rounds.length - 1];
+      if (parseFloat(teamLastRound?.totalInvestment || 0) > 0) fundingCounts.investment++;
+      if (parseFloat(teamLastRound?.totalRevenue    || 0) > 0) fundingCounts.revenue++;
+      const teamSubsidy = team.rounds?.reduce((s, r) => s + parseFloat(r.funding?.subsidy || 0), 0) || 0;
+      const teamLoan    = team.rounds?.reduce((s, r) => s + parseFloat(r.funding?.loan    || 0), 0) || 0;
+      if (teamSubsidy > 0) fundingCounts.subsidy++;
+      if (teamLoan    > 0) fundingCounts.loan++;
     });
 
     const mostCommonFunding = Object.entries(fundingCounts)
@@ -329,6 +363,42 @@ export function Analytics() {
       totalRoundsCompleted: totalRounds,
       gamesCount: selectedGamesData.length
     };
+
+    // Expert Usage — count how many teams used each expert category
+    const expertCounts = {};
+    allTeams.forEach(team => {
+      const lastRoundActivities = team.rounds?.[team.rounds.length - 1]?.completedActivities
+        || team.completedActivities
+        || [];
+      const usedExperts = new Set();
+      lastRoundActivities.forEach(actId => {
+        const expert = ACTIVITY_EXPERT_MAP[actId];
+        if (expert) usedExperts.add(expert);
+      });
+      usedExperts.forEach(expert => {
+        expertCounts[expert] = (expertCounts[expert] || 0) + 1;
+      });
+    });
+    data.expertUsage = Object.entries(expertCounts)
+      .map(([expert, count]) => ({ expert, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Deal Quality — equity, loan interest, licence per team
+    data.dealQuality = allTeams.map((team, idx) => {
+      const lastRound = team.rounds?.[team.rounds.length - 1];
+      const investorEquity = parseFloat(lastRound?.investorEquity ?? team.investorEquity ?? 0);
+      const loanInterest   = parseFloat(lastRound?.loanInterest   ?? team.loanInterest   ?? 0);
+      const hadLoan = (team.rounds?.reduce((s, r) => s + parseFloat(r.funding?.loan || 0), 0) || 0) > 0;
+      const licenceAgreement = lastRound?.licenceAgreement ?? team.licenceAgreement ?? null;
+
+      return {
+        name: team.teamName || `Team ${idx + 1}`,
+        gameName: team.gameName,
+        investorEquity,
+        loanInterest: hadLoan ? loanInterest : null,
+        licenceAgreement,
+      };
+    });
 
     return data;
   }, [selectedGameIds, gamesData]);
@@ -619,6 +689,101 @@ export function Analytics() {
                     <Bar dataKey="employees" fill="#22c55e" name="Employees" />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Most Popular Expert */}
+            {chartData.expertUsage?.length > 0 && (
+              <div className="chart-card">
+                <div className="chart-header">
+                  <Users size={20} />
+                  <h3>Most Popular Expert</h3>
+                </div>
+                <div className="chart-body">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData.expertUsage} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis
+                        type="number"
+                        allowDecimals={false}
+                        stroke="#64748b"
+                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+                        label={{ value: 'teams', position: 'insideRight', offset: -4, fill: '#64748b', fontSize: 11 }}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="expert"
+                        stroke="#64748b"
+                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+                        width={130}
+                      />
+                      <Tooltip
+                        formatter={(val) => [`${val} team${val !== 1 ? 's' : ''}`, 'Used by']}
+                        contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
+                        labelStyle={{ color: '#e2e8f0' }}
+                      />
+                      <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                        {chartData.expertUsage.map((entry) => (
+                          <Cell key={entry.expert} fill={EXPERT_COLORS[entry.expert] || '#6366f1'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Deal Quality Overview */}
+            <div className="chart-card">
+              <div className="chart-header">
+                <DollarSign size={20} />
+                <h3>Deal Quality</h3>
+              </div>
+              <div className="chart-body">
+                <div className="deal-table">
+                  <div className="deal-header">
+                    <span className="deal-team-col">Team</span>
+                    <span className="deal-col">Investor equity</span>
+                    <span className="deal-col">Loan interest</span>
+                    <span className="deal-col">Licence deal</span>
+                  </div>
+                  {chartData.dealQuality?.map((team, idx) => {
+                    const equityClass = team.investorEquity === 0 ? 'deal-na'
+                      : team.investorEquity > 50 ? 'deal-bad'
+                      : team.investorEquity > 30 ? 'deal-ok'
+                      : 'deal-good';
+                    const interestClass = team.loanInterest === null ? 'deal-na'
+                      : team.loanInterest >= 10 ? 'deal-bad'
+                      : team.loanInterest >= 5  ? 'deal-ok'
+                      : 'deal-good';
+                    const licenceClass = !team.licenceAgreement ? 'deal-na'
+                      : team.licenceAgreement === 'balanced' ? 'deal-good'
+                      : team.licenceAgreement === 'revenueHeavy' ? 'deal-bad'
+                      : 'deal-ok';
+                    const licenceLabel = {
+                      balanced:       'Balanced ✓',
+                      revenueHeavy:   'Revenue-heavy ✗',
+                      highPercentage: 'High %',
+                      earlyPayments:  'Early payments',
+                      equity:         'Equity deal',
+                    }[team.licenceAgreement] || '—';
+
+                    return (
+                      <div key={idx} className="deal-row">
+                        <span className="deal-team-col">{team.name}</span>
+                        <span className={`deal-cell ${equityClass}`}>
+                          {team.investorEquity > 0 ? `${Math.round(team.investorEquity)}%` : '—'}
+                        </span>
+                        <span className={`deal-cell ${interestClass}`}>
+                          {team.loanInterest !== null ? `${team.loanInterest}%` : '—'}
+                        </span>
+                        <span className={`deal-cell ${licenceClass}`}>
+                          {licenceLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
